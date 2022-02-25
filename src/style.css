@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "ExampleFont";
+  src: url("./assets/fonts/example_font.ttf") format("ttf"),
+    url("./assets/fonts/example_font.ttf") format("ttf");
+  font-weight: 600;
+  font-style: normal;
+}
+
+.hello {
+  color: red;
+  font-family: "ExampleFont";
+  background: url("./assets/images/punchbird.png");
+}

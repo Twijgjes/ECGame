@@ -1,0 +1,9 @@
+{
+  "title": "JSON Example",
+  "owner": {
+    "name": "Me",
+    "organization": "Q42",
+    "bio": "Programs cool shit.",
+    "dob": "1992-04-20T07:32:00.000Z"
+  }
+}
