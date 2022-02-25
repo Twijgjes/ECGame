@@ -2,7 +2,7 @@
   "name": "ecgame",
   "version": "1.0.0",
   "description": "Game built using the Entity Component architecture pattern",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.config.js"
@@ -10,7 +10,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/three": "^0.137.0",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.5.5",
     "webpack": "^5.68.0",
     "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "three": "^0.138.0"
   }
 }
