@@ -6,6 +6,10 @@
   font-style: normal;
 }
 
+body {
+  margin: 0;
+}
+
 .hello {
   color: red;
   font-family: "ExampleFont";

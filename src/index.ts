@@ -1,11 +1,22 @@
 import { Vector3 } from "three";
 import "./style.css";
 import Punchbird from "./assets/images/punchbird.png";
-import printsData from "./print";
+import { threeSetup } from "./threeSetup";
+import { threeTestSetup } from "./utils/threeTestSetup";
 
 function component() {
   const element = document.createElement("div");
   const btn = document.createElement("button");
+  const threeParts = threeSetup(document.body);
+  const cube = threeTestSetup(threeParts);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+    threeParts.renderer.render(threeParts.scene, threeParts.camera);
+  }
+  animate();
 
   // Three, currently included via a script, is required for this line to work
   const v = new Vector3(1, 2, 5);
@@ -19,7 +30,6 @@ function component() {
   element.appendChild(myIcon);
 
   btn.innerHTML = "Click me and check the console!";
-  btn.onclick = printsData;
 
   element.appendChild(btn);
 
