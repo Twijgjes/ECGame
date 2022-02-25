@@ -6,13 +6,13 @@ import {
   Renderer,
 } from "three";
 
-export interface ThreeParts {
+export interface Engine {
   scene: Scene;
   camera: Camera;
   renderer: Renderer;
 }
 
-export function threeSetup(element: HTMLElement): ThreeParts {
+export function threeSetup(element: HTMLElement): Engine {
   console.info("threeSetup");
   const scene = new Scene();
   const camera = new PerspectiveCamera(

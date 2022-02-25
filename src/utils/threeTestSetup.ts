@@ -1,7 +1,7 @@
 import { BoxGeometry, MeshBasicMaterial, Mesh } from "three";
-import { ThreeParts } from "../threeSetup";
+import { Engine } from "../threeSetup";
 
-export function threeTestSetup(threeParts: ThreeParts): Mesh {
+export function threeTestSetup(threeParts: Engine): Mesh {
   console.info("threeTestSetup");
   const { scene, camera } = threeParts;
   const geometry = new BoxGeometry();
