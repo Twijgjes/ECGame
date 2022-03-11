@@ -25,11 +25,11 @@ export function initialize(): Game {
 
   // Vies goor experiment:
   const entityA = new Entity();
-  entityA.transform.position.x = 2;
-  console.info(entityA.transform.position.x);
+  entityA.c.transform.position.x = 2;
+  console.info(entityA.c.transform.position.x);
 
   const entityB = new Entity();
-  console.info(entityB.transform.position.x);
+  console.info(entityB.c.transform.position.x);
 
   return game;
 }

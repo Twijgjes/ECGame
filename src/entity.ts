@@ -13,23 +13,48 @@ import {
  * even when that entity does not have the component yet, because we'll instantiate
  * the component on the fly with default values
  */
-export class IEntity {
-  // updateables: IUpdateable[];
+
+function foo<T extends {}, K extends keyof T>(t: T, k: K, v: T[K]) {
+  t[k] = v;
+}
+const some = { a: "string", b: 2 };
+foo(some, "a", "string");
+const optionalSome: Partial<typeof some> = { a: "" };
+
+export type IComponent = {
+  transform: Transform;
+  body: Body;
+};
+// interface IComponents<T> {
+//   [Key in keyof T]: T[Key];
+// }
+
+// declare const foo2: Components<IComponent>;
+// // foo2.obj.
+
+// declare type ComponentsHerman<T> =  {
+//   [Key in keyof T]: T[Key];
+//   new()
+// };
+// function ComponentsHerman<T>() {
+//   return new Proxy(this, {});
+// }
+
+// const foo3 = new ComponentsHerman<IComponents>();
+
+export class Components {
+  // I want something like:
+  // But then entity.transform should be just Transform, not also Body
+  // public obj: { [Key in keyof T]: T[Key] };
   // components: IComponent[];
   transform: Transform;
   body: Body;
 
-  // I want something like:
-  // [key: string]: IComponent;
-}
-
-export class Entity extends IEntity {
   constructor() {
-    super();
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
     return new Proxy(this, {
       // https://www.typescriptlang.org/docs/handbook/2/keyof-types.html
-      get(target: Entity, name: keyof Entity): IComponent {
+      get(target: Components, name: keyof Components) {
         if (!target[name]) {
           switch (name) {
             case "transform":
@@ -46,7 +71,7 @@ export class Entity extends IEntity {
 
         return target[name];
       },
-      set(target: Entity, _: keyof Entity, value: IComponent) {
+      set(target: Components, _: keyof Components, value: IComponent) {
         if (value instanceof Transform) {
           target.transform = value;
           return true;
@@ -61,26 +86,38 @@ export class Entity extends IEntity {
   }
 }
 
+export class Entity {
+  c: Components;
+
+  constructor() {
+    this.c = new Components();
+  }
+
+  update(deltaSeconds: number) {
+    for (const [key, updateable] of Object.entries(this.c)) {
+      if (updateable.update) {
+        updateable.update(deltaSeconds, this.c);
+      }
+    }
+  }
+}
+
 export interface IUpdateable {
   update: (deltaSeconds: number) => void;
 }
-
-export type IComponent = Transform | Body;
-
-export interface ITransform {
-  position: Vector3;
-  rotation: Quaternion;
-  scale: Vector3;
+export interface IUpdateableComponent {
+  update: (deltaSeconds: number, components: Components) => void;
 }
-export class Transform implements ITransform {
+
+export class Transform {
   position: Vector3;
   rotation: Quaternion;
   scale: Vector3;
 
-  constructor(position?: Vector3, rotation?: Quaternion, scale?: Quaternion) {
+  constructor(position?: Vector3, rotation?: Quaternion, scale?: Vector3) {
     this.position = position ? position : new Vector3();
     this.rotation = rotation ? rotation : new Quaternion();
-    this.scale = position ? position : new Vector3(1, 1, 1);
+    this.scale = scale ? scale : new Vector3(1, 1, 1);
   }
 }
 
@@ -98,12 +135,19 @@ export class Transform implements ITransform {
 //   }
 // }
 
-export class Body {
+export class Body implements IUpdateableComponent {
   velocity: Vector3;
   // rotationVelocity: Quaternion;
   // gravity: Vector3;
 
   constructor(velocity?: Vector3) {
+    // entity.updateables.push(this);
     this.velocity = velocity ? velocity : new Vector3();
+  }
+
+  update(deltaSeconds: number, components: Components) {
+    components.transform.position.add(
+      this.velocity.clone().multiplyScalar(deltaSeconds)
+    );
   }
 }
