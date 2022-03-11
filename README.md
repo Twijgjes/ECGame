@@ -5,5 +5,4 @@ Build for deployment
 `npm run build`
 
 Development
-`npm start` (Runs a server that reloads the webpage on changes)
-`npm run watch` (Runs a watcher that rebuilds the code, but does not reload the page)
+a. `npm start` (Runs a server that reloads the webpage on changes)
