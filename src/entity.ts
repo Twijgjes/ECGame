@@ -11,6 +11,9 @@ import {
   TextureLoader,
   Vector3,
   Sprite,
+  NearestFilter,
+  Texture,
+  Scene,
 } from "three";
 import { Game } from "./game";
 import punchbirdImg from "./assets/images/punchbird.png";
@@ -28,44 +31,22 @@ import punchbirdImg from "./assets/images/punchbird.png";
 // const some = { a: "string", b: 2 };
 // foo(some, "a", "string");
 // const optionalSome: Partial<typeof some> = { a: "" };
+export type IComponent = Transform | Body | Prop | Light | CSprite;
 
-export type IComponent = {
-  transform: Transform;
-  body: Body;
-};
-// interface IComponents<T> {
-//   [Key in keyof T]: T[Key];
-// }
-
-// declare const foo2: Components<IComponent>;
-// // foo2.obj.
-
-// declare type ComponentsHerman<T> =  {
-//   [Key in keyof T]: T[Key];
-//   new()
-// };
-// function ComponentsHerman<T>() {
-//   return new Proxy(this, {});
-// }
-
-// const foo3 = new ComponentsHerman<IComponents>();
-
-export class Components {
-  // I want something like:
-  // But then entity.transform should be just Transform, not also Body
-  // public obj: { [Key in keyof T]: T[Key] };
-  // components: IComponent[];
+export class Entity {
   transform: Transform;
   body: Body;
   prop: Prop;
   light: Light;
   sprite: CSprite;
+  private proxy: Entity;
 
-  constructor() {
+  constructor(private game: Game) {
+    // this.c = new Components();
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
-    return new Proxy(this, {
+    this.proxy = new Proxy(this, {
       // https://www.typescriptlang.org/docs/handbook/2/keyof-types.html
-      get(target: Components, name: keyof Components) {
+      get(target: Entity, name: keyof Entity) {
         if (!target[name]) {
           switch (name) {
             case "transform":
@@ -82,17 +63,20 @@ export class Components {
               break;
             case "sprite":
               target.sprite = new CSprite();
-              // target.sprite.sprite.position. = target.transform.position;
               break;
             default:
               console.warn("Entity does not have a", name);
               break;
           }
+          // Jesus fuck, fix this shit please
+          if ((target[name] as ISceneProp).addToScene) {
+            (target[name] as ISceneProp).addToScene(game.engine.scene);
+          }
         }
 
         return target[name];
       },
-      set(target: Components, _: keyof Components, value: IComponent) {
+      set(target: Entity, _: keyof Entity, value: IComponent) {
         if (value instanceof Transform) {
           target.transform = value;
           return true;
@@ -102,6 +86,7 @@ export class Components {
           return true;
         }
         if (value instanceof Prop) {
+          target.prop.removeFromScene(game.engine.scene);
           target.prop = value;
           return true;
         }
@@ -110,27 +95,29 @@ export class Components {
           return true;
         }
         if (value instanceof CSprite) {
+          target.sprite.removeFromScene(game.engine.scene);
           target.sprite = value;
           return true;
         }
         return false;
       },
     });
-  }
-}
 
-export class Entity {
-  c: Components;
-
-  constructor(game: Game) {
-    this.c = new Components();
-    game.updateables.push(this);
+    this.game.updateables.push(this);
+    return this.proxy;
   }
 
   update(deltaSeconds: number) {
-    for (const [key, updateable] of Object.entries(this.c)) {
-      if (updateable.update) {
-        updateable.update(deltaSeconds, this.c);
+    for (const [key, updateable] of Object.entries(this.proxy)) {
+      // Haha fuck this is dirty
+      // TODO: maybe refactor this so that all components get added to a separate array or obj?
+      // But then I have to keep track of removals and additions and I'm lazy lol
+      if (key === "game" || key === "proxy") {
+        continue;
+      }
+
+      if (updateable && updateable.update) {
+        updateable.update(deltaSeconds, this.proxy);
       }
     }
   }
@@ -140,7 +127,12 @@ export interface IUpdateable {
   update: (deltaSeconds: number) => void;
 }
 export interface IUpdateableComponent {
-  update: (deltaSeconds: number, components: Components) => void;
+  update: (deltaSeconds: number, components: Entity) => void;
+}
+
+export interface ISceneProp {
+  addToScene: (scene: Scene) => void;
+  removeFromScene: (scene: Scene) => void;
 }
 
 export class Transform {
@@ -155,7 +147,7 @@ export class Transform {
   }
 }
 
-export class Prop implements IUpdateableComponent {
+export class Prop implements IUpdateableComponent, ISceneProp {
   mesh: Mesh;
 
   constructor(mesh?: Mesh) {
@@ -167,10 +159,18 @@ export class Prop implements IUpdateableComponent {
     this.mesh = mesh;
   }
 
-  update(_: number, components: Components) {
+  update(_: number, components: Entity) {
     this.mesh.position.copy(components.transform.position);
     this.mesh.quaternion.copy(components.transform.rotation);
     this.mesh.scale.copy(components.transform.scale);
+  }
+
+  addToScene(scene: Scene) {
+    scene.add(this.mesh);
+  }
+
+  removeFromScene(scene: Scene) {
+    scene.remove(this.mesh);
   }
 }
 
@@ -200,7 +200,7 @@ export class Body implements IUpdateableComponent {
     this.gravity = gravity;
   }
 
-  update(deltaSeconds: number, components: Components) {
+  update(deltaSeconds: number, components: Entity) {
     if (this.gravity) {
       this.velocity.add(this.gravity.clone().multiplyScalar(deltaSeconds));
     }
@@ -211,17 +211,67 @@ export class Body implements IUpdateableComponent {
   }
 }
 
-export class CSprite implements IUpdateableComponent {
+export class CSprite implements IUpdateableComponent, ISceneProp {
+  private _texture: Texture;
   constructor(
-    public texture = new TextureLoader().load(punchbirdImg), //"./assets/images/punchbird.png"),
-    public spriteMaterial = new SpriteMaterial({ map: texture }),
-    public sprite = new Sprite(spriteMaterial)
+    textureUrl = punchbirdImg, //"./assets/images/punchbird.png"),
+    public spriteMaterial = new SpriteMaterial({
+      map: new TextureLoader().load(textureUrl),
+    }),
+    public sprite = new Sprite(spriteMaterial),
+    public offset = new Vector3()
   ) {
-    console.info("Created sprite");
-    sprite.scale.set(2, 2, 1);
+    // this.setTexture(textureUrl);
+    // this.texture.magFilter = NearestFilter;
+    // this.texture.minFilter = NearestFilter;
+    // console.info(
+    //   "texture image:",
+    //   this._texture.image,
+    //   this._texture.sourceFile,
+    //   this.spriteMaterial.map.image
+    // );
+    // this._texture.s
+    // this.sprite.scale.set(1, 1, 1);
   }
 
-  update(_: number, components: Components) {
-    this.sprite.position.copy(components.transform.position);
+  setTexture(textureUrl: string) {
+    // console.info("updating texture");
+    new TextureLoader().load(textureUrl, (texture) => {
+      this._texture = texture;
+      this._texture.magFilter = NearestFilter;
+      this._texture.minFilter = NearestFilter;
+      this.spriteMaterial.map = this._texture;
+      // this.spriteMaterial.map
+      // this._texture.needsUpdate = true;
+      // this.spriteMaterial.map.needsUpdate = true;
+
+      // console.info("texture image:", this.spriteMaterial.map.image);
+      this.sprite.scale.set(
+        this._texture.image.width / 100,
+        this._texture.image.height / 100,
+        1
+      );
+      // punchbirdImg.
+    });
+    // this.spriteMaterial.map.needsUpdate = true;
+    // this.sprite.material = this.spriteMaterial;
+    // this.sprite.material.needsUpdate = true;
+  }
+
+  get texture(): Texture {
+    return this._texture;
+  }
+
+  update(_: number, components: Entity) {
+    // this.sprite.rotation.setFromQuaternion(components.transform.rotation);
+    this.sprite.position.copy(components.transform.position).add(this.offset);
+  }
+
+  addToScene(scene: Scene) {
+    scene.add(this.sprite);
+  }
+
+  removeFromScene(scene: Scene) {
+    scene.remove(this.sprite);
   }
 }
