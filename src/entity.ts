@@ -7,9 +7,13 @@ import {
   PointLight,
   Quaternion,
   SpotLight,
+  SpriteMaterial,
+  TextureLoader,
   Vector3,
+  Sprite,
 } from "three";
 import { Game } from "./game";
+import punchbirdImg from "./assets/images/punchbird.png";
 
 /**
  * The goal is to create an entity-component system that allows me to
@@ -55,6 +59,7 @@ export class Components {
   body: Body;
   prop: Prop;
   light: Light;
+  sprite: CSprite;
 
   constructor() {
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
@@ -74,6 +79,10 @@ export class Components {
               break;
             case "light":
               target.light = new Light();
+              break;
+            case "sprite":
+              target.sprite = new CSprite();
+              // target.sprite.sprite.position. = target.transform.position;
               break;
             default:
               console.warn("Entity does not have a", name);
@@ -98,6 +107,10 @@ export class Components {
         }
         if (value instanceof Light) {
           target.light = value;
+          return true;
+        }
+        if (value instanceof CSprite) {
+          target.sprite = value;
           return true;
         }
         return false;
@@ -166,12 +179,6 @@ export class Light {
   light: Lights;
 
   constructor(light?: Lights) {
-    // if (!light) {
-    //   const geometry = new BoxGeometry();
-    //   const material = new MeshBasicMaterial({ color: 0x00ff00 });
-    //   mesh = new Mesh(geometry, material);
-    // }
-    // this.mesh = mesh;
     this.light = light ? light : new PointLight(0xffffff, 10, 100);
   }
 }
@@ -201,5 +208,20 @@ export class Body implements IUpdateableComponent {
       this.velocity.clone().multiplyScalar(deltaSeconds)
     );
     components.transform.rotation.multiply(this.rotationVelocity);
+  }
+}
+
+export class CSprite implements IUpdateableComponent {
+  constructor(
+    public texture = new TextureLoader().load(punchbirdImg), //"./assets/images/punchbird.png"),
+    public spriteMaterial = new SpriteMaterial({ map: texture }),
+    public sprite = new Sprite(spriteMaterial)
+  ) {
+    console.info("Created sprite");
+    sprite.scale.set(2, 2, 1);
+  }
+
+  update(_: number, components: Components) {
+    this.sprite.position.copy(components.transform.position);
   }
 }

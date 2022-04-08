@@ -1,15 +1,6 @@
-import {
-  AmbientLight,
-  BoxGeometry,
-  Euler,
-  Mesh,
-  MeshBasicMaterial,
-  MeshPhongMaterial,
-  Vector3,
-} from "three";
-import { Entity, IUpdateable, Light } from "./entity";
+import { BoxGeometry, Euler, Mesh, MeshBasicMaterial } from "three";
+import { Entity, IUpdateable } from "./entity";
 import { Engine, threeSetup } from "./threeSetup";
-import { threeTestSetup } from "./utils/threeTestSetup";
 
 export interface Game {
   engine: Engine;
@@ -47,6 +38,10 @@ export function initialize(): Game {
   // polygon.c.prop.mesh.material = new MeshPhongMaterial({ color: 0xff0 });
   // polygon.c.transform.scale.setScalar(0.5);
   // polygon.c.body.gravity = new Vector3(0, -9.81, 0);s
+
+  const punchbird = new Entity(game);
+  punchbird.c.transform.position.set(2, 0, 0);
+  game.engine.scene.add(punchbird.c.sprite.sprite); // Just touch it
 
   // const ambientLight = new Entity(game);
   // ambientLight.c.light = new Light(new AmbientLight(0x404040, 1));
