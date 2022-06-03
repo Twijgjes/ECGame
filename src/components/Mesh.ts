@@ -13,10 +13,10 @@ export class CMesh implements IUpdateableComponent, ISceneProp {
     this.mesh = mesh;
   }
 
-  update(_: number, components: Entity) {
-    this.mesh.position.copy(components.transform.position);
-    this.mesh.quaternion.copy(components.transform.rotation);
-    this.mesh.scale.copy(components.transform.scale);
+  update(_: number, entity: Entity) {
+    this.mesh.position.copy(entity.transform.position);
+    this.mesh.quaternion.copy(entity.transform.rotation);
+    this.mesh.scale.copy(entity.transform.scale);
   }
 
   addToScene(scene: Scene) {

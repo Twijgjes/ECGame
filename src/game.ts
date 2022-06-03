@@ -5,6 +5,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   TextureLoader,
+  Vector3,
 } from "three";
 import { Entity, IUpdateable } from "./entity";
 import { Engine, threeSetup } from "./threeSetup";
@@ -16,6 +17,8 @@ import longpipeImg from "./assets/images/longpipe.png";
 import FISTImg from "./assets/images/FIST.png";
 import titleImg from "./assets/images/title.png";
 import berdArmBentImg from "./assets/images/punchbird_arm_bent.png";
+import { CPlane } from "./components/Plane";
+import punchbirdImg from "../assets/images/punchbird.png";
 
 export interface Game {
   engine: Engine;
@@ -48,12 +51,12 @@ export function initialize(): Game {
 
   // Pure polygonale porno
   // const polygon = new Entity(game);
-  // polygon.prop; // If you touch, it exist
+  // polygon.mesh; // If you touch, it exist
 
   // polygon.body.rotationVelocity.setFromEuler(new Euler(0.01, 0.01, 0));
-  // polygon.c.prop.mesh.material = new MeshPhongMaterial({ color: 0xff0 });
-  // polygon.c.transform.scale.setScalar(0.5);
-  // polygon.c.body.gravity = new Vector3(0, -9.81, 0);
+  // polygon.mesh.material = new MeshPhongMaterial({ color: 0xff0 });
+  // polygon.transform.scale.setScalar(0.5);
+  // polygon.body.gravity = new Vector3(0, -9.81, 0);
 
   const ground = new Entity(game);
   ground.sprite.setTexture(groundImg);
@@ -68,7 +71,15 @@ export function initialize(): Game {
   clouds.transform.position.set(0, -0.7, -0.2);
 
   const punchbird = new Entity(game);
-  punchbird.sprite.setTexture(berdArmBentImg);
+  // punchbird.sprite.setTexture(berdArmBentImg);
+  punchbird.plane;
+  punchbird.plane.setTexture(berdArmBentImg);
+  // punchbird.transform.scale.multiplyScalar(1.4);
+  // (punchbird.plane.mesh.material as MeshBasicMaterial).wireframe = true;
+  punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
+  punchbird.body.acceleration = new Vector3(0, -10, 0);
+  punchbird.clickBoost;
+  // punchbird.
 
   const title = new Entity(game);
   title.transform.position.set(0, 2.6, 0);

@@ -4,5 +4,5 @@ import { Entity, IUpdateableComponent } from "../entity";
 //   constructor() {}
 //   // bla
 
-//   update(deltaSeconds: number, components: Entity) {}
+//   update(deltaSeconds: number, entity: Entity) {}
 // }

@@ -12,8 +12,11 @@ import {
   Light,
 } from "three";
 import { Body } from "./components/Body";
+import { ClickBoost } from "./components/ClickBoost";
 import { CMesh } from "./components/Mesh";
+import { CPlane } from "./components/Plane";
 import { CSprite } from "./components/Sprite";
+import { Transform } from "./components/Transform";
 import { Game } from "./game";
 
 /**
@@ -29,7 +32,23 @@ import { Game } from "./game";
 // const some = { a: "string", b: 2 };
 // foo(some, "a", "string");
 // const optionalSome: Partial<typeof some> = { a: "" };
-export type IComponent = Transform | Body | CMesh | Light | CSprite;
+export type IComponent =
+  | Transform
+  | Body
+  | CMesh
+  | Light
+  | CSprite
+  | CPlane
+  | ClickBoost;
+const ComponentMap = {
+  transform: Transform,
+  body: Body,
+  mesh: CMesh,
+  light: Light,
+  sprite: CSprite,
+  plane: CPlane,
+  clickBoost: ClickBoost,
+};
 
 export class Entity {
   transform: Transform;
@@ -37,64 +56,48 @@ export class Entity {
   mesh: CMesh;
   light: Light;
   sprite: CSprite;
+  plane: CPlane;
+  clickBoost: ClickBoost;
+
   private proxy: Entity;
 
   constructor(private game: Game) {
-    // this.c = new Components();
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
     this.proxy = new Proxy(this, {
       // https://www.typescriptlang.org/docs/handbook/2/keyof-types.html
       get(target: Entity, name: keyof Entity) {
-        if (!target[name]) {
-          switch (name) {
-            case "transform":
-              target.transform = new Transform();
-              break;
-            case "body":
-              target.body = new Body();
-              break;
-            case "mesh":
-              target.mesh = new CMesh();
-              break;
-            case "light":
-              target.light = new Light();
-              break;
-            case "sprite":
-              target.sprite = new CSprite();
-              break;
-            default:
-              console.warn("Entity does not have a", name);
-              break;
+        const nname = name as keyof typeof ComponentMap;
+        if (ComponentMap[nname] && !target[name]) {
+          const newComponent = new ComponentMap[nname]();
+          (target[name] as IComponent) = newComponent;
+          if (isInitedComponent(newComponent)) {
+            newComponent.init(target.proxy);
           }
-          // Jesus fuck, fix this shit please
-          if ((target[name] as ISceneProp).addToScene) {
-            (target[name] as ISceneProp).addToScene(game.engine.scene);
+          if (isSceneProp(newComponent)) {
+            newComponent.addToScene(game.engine.scene);
           }
         }
-
         return target[name];
       },
-      set(target: Entity, _: keyof Entity, value: IComponent) {
-        if (value instanceof Transform) {
-          target.transform = value;
-          return true;
-        }
-        if (value instanceof Body) {
-          target.body = value;
-          return true;
-        }
-        if (value instanceof CMesh) {
-          target.mesh.removeFromScene(game.engine.scene);
-          target.mesh = value;
-          return true;
-        }
-        if (value instanceof Light) {
-          target.light = value;
-          return true;
-        }
-        if (value instanceof CSprite) {
-          target.sprite.removeFromScene(game.engine.scene);
-          target.sprite = value;
+      set(target: Entity, name: keyof Entity, value: IComponent) {
+        console.info("set", name);
+        const nname = name as keyof typeof ComponentMap;
+        if (ComponentMap[nname]) {
+          const oldComponent = target[name];
+          // Clean up old component
+          if (oldComponent && isSceneProp(oldComponent)) {
+            oldComponent.removeFromScene(game.engine.scene);
+          }
+
+          // Set up new component
+          (target[name] as IComponent) = value;
+          if (isInitedComponent(value)) {
+            value.init(target.proxy);
+          }
+          if (isSceneProp(value)) {
+            value.addToScene(game.engine.scene);
+          }
+
           return true;
         }
         return false;
@@ -114,7 +117,7 @@ export class Entity {
         continue;
       }
 
-      if (updateable && updateable.update) {
+      if (isUpdateableComponent(updateable)) {
         updateable.update(deltaSeconds, this.proxy);
       }
     }
@@ -125,22 +128,22 @@ export interface IUpdateable {
   update: (deltaSeconds: number) => void;
 }
 export interface IUpdateableComponent {
-  update: (deltaSeconds: number, components: Entity) => void;
+  update: (deltaSeconds: number, entity: Entity) => void;
+}
+function isUpdateableComponent(obj: any): obj is IUpdateableComponent {
+  return !!obj && !!obj.update;
+}
+export interface IInitializedComponent {
+  init: (entity: Entity) => void;
+}
+function isInitedComponent(obj: any): obj is IInitializedComponent {
+  return !!obj.init;
 }
 
 export interface ISceneProp {
   addToScene: (scene: Scene) => void;
   removeFromScene: (scene: Scene) => void;
 }
-
-export class Transform {
-  position: Vector3;
-  rotation: Quaternion;
-  scale: Vector3;
-
-  constructor(position?: Vector3, rotation?: Quaternion, scale?: Vector3) {
-    this.position = position ? position : new Vector3();
-    this.rotation = rotation ? rotation : new Quaternion();
-    this.scale = scale ? scale : new Vector3(1, 1, 1);
-  }
+function isSceneProp(obj: any): obj is ISceneProp {
+  return !!obj.addToScene && !!obj.removeFromScene;
 }

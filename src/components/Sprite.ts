@@ -40,8 +40,8 @@ export class CSprite implements IUpdateableComponent, ISceneProp {
     return this._texture;
   }
 
-  update(_: number, components: Entity) {
-    this.sprite.position.copy(components.transform.position).add(this.offset);
+  update(_: number, entity: Entity) {
+    this.sprite.position.copy(entity.transform.position).add(this.offset);
   }
 
   addToScene(scene: Scene) {
