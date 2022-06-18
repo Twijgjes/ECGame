@@ -19,10 +19,16 @@ import titleImg from "./assets/images/title.png";
 import berdArmBentImg from "./assets/images/punchbird_arm_bent.png";
 import { CPlane } from "./components/Plane";
 import punchbirdImg from "../assets/images/punchbird.png";
+import {
+  Boundary2DCollider,
+  Collider2D,
+  CollisionSolver,
+} from "./components/Collision";
 
 export interface Game {
   engine: Engine;
   updateables: IUpdateable[];
+  collidables2D: Entity[];
   lastTick: number;
 }
 
@@ -31,6 +37,7 @@ export function initialize(): Game {
   const game = {
     engine,
     updateables: [] as IUpdateable[],
+    collidables2D: [] as Entity[],
     lastTick: Date.now(),
   };
   game.engine.camera.position.z = 5;
@@ -61,6 +68,8 @@ export function initialize(): Game {
   const ground = new Entity(game);
   ground.sprite.setTexture(groundImg);
   ground.transform.position.set(0, -3.1, 0);
+  ground.boundary2DCollider.minY = -3.1;
+  // ground.hasComponent("body");
 
   const bushes = new Entity(game);
   bushes.sprite.setTexture(bushesImg);
@@ -79,6 +88,7 @@ export function initialize(): Game {
   punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
   punchbird.body.acceleration = new Vector3(0, -10, 0);
   punchbird.clickBoost;
+  punchbird.circleCollider.radius = 1;
   // punchbird.
 
   const title = new Entity(game);
@@ -117,6 +127,8 @@ function update(game: Game) {
   for (const updateable of game.updateables) {
     updateable.update(deltaSeconds);
   }
+  CollisionSolver.solveCollisions(game.collidables2D);
+
   game.engine.renderer.render(game.engine.scene, game.engine.camera);
   // Loop through entities
   // If entity can be updated, do so

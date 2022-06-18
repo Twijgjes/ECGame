@@ -13,6 +13,11 @@ import {
 } from "three";
 import { Body } from "./components/Body";
 import { ClickBoost } from "./components/ClickBoost";
+import {
+  Boundary2DCollider,
+  CircleCollider,
+  isCollider2D,
+} from "./components/Collision";
 import { CMesh } from "./components/Mesh";
 import { CPlane } from "./components/Plane";
 import { CSprite } from "./components/Sprite";
@@ -39,7 +44,9 @@ export type IComponent =
   | Light
   | CSprite
   | CPlane
-  | ClickBoost;
+  | ClickBoost
+  | CircleCollider
+  | Boundary2DCollider;
 const ComponentMap = {
   transform: Transform,
   body: Body,
@@ -48,6 +55,8 @@ const ComponentMap = {
   sprite: CSprite,
   plane: CPlane,
   clickBoost: ClickBoost,
+  circleCollider: CircleCollider,
+  boundary2DCollider: Boundary2DCollider,
 };
 
 export class Entity {
@@ -58,10 +67,14 @@ export class Entity {
   sprite: CSprite;
   plane: CPlane;
   clickBoost: ClickBoost;
+  circleCollider: CircleCollider;
+  boundary2DCollider: Boundary2DCollider;
 
   private proxy: Entity;
+  private unwrapped: Entity;
 
   constructor(private game: Game) {
+    // this.entity = this;
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
     this.proxy = new Proxy(this, {
       // https://www.typescriptlang.org/docs/handbook/2/keyof-types.html
@@ -75,6 +88,9 @@ export class Entity {
           }
           if (isSceneProp(newComponent)) {
             newComponent.addToScene(game.engine.scene);
+          }
+          if (isCollider2D(newComponent)) {
+            game.collidables2D.push(target.proxy);
           }
         }
         return target[name];
@@ -97,6 +113,9 @@ export class Entity {
           if (isSceneProp(value)) {
             value.addToScene(game.engine.scene);
           }
+          if (isCollider2D(value)) {
+            game.collidables2D.push(target.proxy);
+          }
 
           return true;
         }
@@ -105,7 +124,14 @@ export class Entity {
     });
 
     this.game.updateables.push(this);
+    this.unwrapped = this;
     return this.proxy;
+  }
+
+  hasComponent(componentName: keyof typeof ComponentMap): IComponent {
+    if (!!this.unwrapped[componentName]) {
+      return this[componentName];
+    }
   }
 
   update(deltaSeconds: number) {
@@ -113,7 +139,7 @@ export class Entity {
       // Haha fuck this is dirty
       // TODO: maybe refactor this so that all components get added to a separate array or obj?
       // But then I have to keep track of removals and additions and I'm lazy lol
-      if (key === "game" || key === "proxy") {
+      if (key === "game" || key === "proxy" || key === "unwrapped") {
         continue;
       }
 
