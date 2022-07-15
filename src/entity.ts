@@ -1,23 +1,13 @@
-import {
-  AmbientLight,
-  BoxGeometry,
-  HemisphereLight,
-  Mesh,
-  MeshBasicMaterial,
-  PointLight,
-  Quaternion,
-  SpotLight,
-  Vector3,
-  Scene,
-  Light,
-} from "three";
+import { Scene, Light } from "three";
 import { Body } from "./components/Body";
 import { ClickBoost } from "./components/ClickBoost";
 import {
   Boundary2DCollider,
   CircleCollider,
   isCollider2D,
+  RectangleCollider,
 } from "./components/Collision";
+import { DebugBox, DebugSphere } from "./components/Debug";
 import { CMesh } from "./components/Mesh";
 import { CPlane } from "./components/Plane";
 import { CSprite } from "./components/Sprite";
@@ -37,6 +27,12 @@ import { Game } from "./game";
 // const some = { a: "string", b: 2 };
 // foo(some, "a", "string");
 // const optionalSome: Partial<typeof some> = { a: "" };
+
+// TODO:
+// try making operator overloading with valueOf or toString
+// and then saving context to a singleton on the first call
+// using the context on the second call and emptying it again
+
 export type IComponent =
   | Transform
   | Body
@@ -46,7 +42,10 @@ export type IComponent =
   | CPlane
   | ClickBoost
   | CircleCollider
-  | Boundary2DCollider;
+  | Boundary2DCollider
+  | RectangleCollider
+  | DebugBox
+  | DebugSphere;
 const ComponentMap = {
   transform: Transform,
   body: Body,
@@ -57,6 +56,9 @@ const ComponentMap = {
   clickBoost: ClickBoost,
   circleCollider: CircleCollider,
   boundary2DCollider: Boundary2DCollider,
+  rectangleCollider: RectangleCollider,
+  debugBox: DebugBox,
+  debugSphere: DebugSphere,
 };
 
 export class Entity {
@@ -69,11 +71,14 @@ export class Entity {
   clickBoost: ClickBoost;
   circleCollider: CircleCollider;
   boundary2DCollider: Boundary2DCollider;
+  rectangleCollider: RectangleCollider;
+  debugBox: DebugBox;
+  debugSphere: DebugSphere;
 
   private proxy: Entity;
   private unwrapped: Entity;
 
-  constructor(private game: Game) {
+  constructor(private game: Game, public debug: boolean = false) {
     // this.entity = this;
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
     this.proxy = new Proxy(this, {
@@ -96,7 +101,7 @@ export class Entity {
         return target[name];
       },
       set(target: Entity, name: keyof Entity, value: IComponent) {
-        console.info("set", name);
+        // console.info("set", name);
         const nname = name as keyof typeof ComponentMap;
         if (ComponentMap[nname]) {
           const oldComponent = target[name];
@@ -146,6 +151,12 @@ export class Entity {
       if (isUpdateableComponent(updateable)) {
         updateable.update(deltaSeconds, this.proxy);
       }
+    }
+  }
+
+  log(message: string, data: any) {
+    if (this.debug) {
+      console.log(message, data);
     }
   }
 }

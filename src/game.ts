@@ -1,29 +1,14 @@
-import {
-  BoxGeometry,
-  Color,
-  Euler,
-  Mesh,
-  MeshBasicMaterial,
-  TextureLoader,
-  Vector3,
-} from "three";
+import { Color, Euler, Vector3 } from "three";
 import { Entity, IUpdateable } from "./entity";
 import { Engine, threeSetup } from "./threeSetup";
 import groundImg from "./assets/images/ground.png";
 import bushesImg from "./assets/images/bushes.png";
 import cloudsImg from "./assets/images/clouds.png";
-import berdImg from "./assets/images/berd.png";
 import longpipeImg from "./assets/images/longpipe.png";
-import FISTImg from "./assets/images/FIST.png";
 import titleImg from "./assets/images/title.png";
 import berdArmBentImg from "./assets/images/punchbird_arm_bent.png";
-import { CPlane } from "./components/Plane";
-import punchbirdImg from "../assets/images/punchbird.png";
-import {
-  Boundary2DCollider,
-  Collider2D,
-  CollisionSolver,
-} from "./components/Collision";
+import { CollisionSolver, RectangleCollider } from "./components/Collision";
+import { DebugBox, DebugSphere } from "./components/Debug";
 
 export interface Game {
   engine: Engine;
@@ -86,9 +71,11 @@ export function initialize(): Game {
   // punchbird.transform.scale.multiplyScalar(1.4);
   // (punchbird.plane.mesh.material as MeshBasicMaterial).wireframe = true;
   punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
+  punchbird.body.velocity = new Vector3(5, 0, 0);
   punchbird.body.acceleration = new Vector3(0, -10, 0);
   punchbird.clickBoost;
   punchbird.circleCollider.radius = 1;
+  punchbird.debugSphere = new DebugSphere(0.4);
   // punchbird.
 
   const title = new Entity(game);
@@ -100,6 +87,8 @@ export function initialize(): Game {
   const pipe = new Entity(game);
   pipe.transform.position.set(2, -3.5, -0.05);
   pipe.sprite.setTexture(longpipeImg);
+  pipe.debugBox = new DebugBox(new Vector3(0.8, 6, 1));
+  pipe.rectangleCollider = new RectangleCollider(0.8, 6);
 
   // const ambientLight = new Entity(game);
   // ambientLight.c.light = new Light(new AmbientLight(0x404040, 1));
