@@ -1,5 +1,9 @@
-import { Vector2, Vector3 } from "three";
+import { Vector2 } from "three";
 import { Entity } from "../entity";
+
+// Implement for 2D: https://www.npmjs.com/package/detect-collisions
+// For 3D https://github.com/kripken/ammo.js
+// maybe use https://www.npmjs.com/package/ammojs-typed
 
 export type SHAPE2D = "CIRCLE" | "RECTANGLE" | "BOUNDARY";
 export type SHAPE3D = "SPHERE" | "CUBOID";
@@ -11,11 +15,27 @@ export abstract class Collider2D {
   public readonly type2D: SHAPE2D;
 }
 
-export interface Collision {
-  collision: boolean; // Wether the two have collided or not
-  aAvoidanceVector: Vector2; // The direction directly away from the center of b
-  bAvoidanceVector: Vector2; // The direction directly away from the center of a
-  overlap: number; // Negative when not overlapping
+// export interface Collision2D {
+//   collision: boolean; // Wether the two have collided or not
+//   aAvoidanceVector: Vector2; // The direction directly away from the center of b
+//   bAvoidanceVector: Vector2; // The direction directly away from the center of a
+//   overlap: number; // Negative when not overlapping
+//   entityA: Entity;
+//   entityB: Entity;
+// }
+
+export interface Collision2DPerspective {
+  self: Entity;
+  other: Entity;
+  selfCollider: CircleCollider | RectangleCollider | Boundary2DCollider;
+  otherCollider: CircleCollider | RectangleCollider | Boundary2DCollider;
+}
+
+export interface Collision2D {
+  collision: boolean;
+  overlap: number;
+  a: Collision2DPerspective;
+  b: Collision2DPerspective;
 }
 
 export interface Boundary2D {
@@ -73,89 +93,27 @@ export class CollisionSolver {
     const boundaryB = b.hasComponent("boundary2DCollider");
     const rectangleA = a.hasComponent("rectangleCollider");
     const rectangleB = b.hasComponent("rectangleCollider");
+    let collision;
     if (isCircleCollider(circleA) && isBoundary2DCollider(boundaryB)) {
-      const collision = this.circleBoundary(a, b.boundary2DCollider);
-      if (collision.collision) {
-        const avoidanceVector3D = new Vector3(
-          collision.aAvoidanceVector.x,
-          collision.aAvoidanceVector.y,
-          0
-        );
-        if (a.hasComponent("body")) {
-          a.transform.position.add(avoidanceVector3D);
-          a.body.velocity.negate();
-        }
-      }
+      collision = this.circleBoundary(a, b);
     }
     if (isBoundary2DCollider(boundaryA) && isCircleCollider(circleB)) {
-      const collision = this.circleBoundary(b, a.boundary2DCollider);
-      if (collision.collision) {
-        const avoidanceVector3D = new Vector3(
-          collision.aAvoidanceVector.x,
-          collision.aAvoidanceVector.y,
-          0
-        );
-        if (b.hasComponent("body")) {
-          b.transform.position.add(avoidanceVector3D);
-          b.body.velocity.negate();
-        }
-      }
+      collision = this.circleBoundary(b, a);
     }
     if (isCircleCollider(circleA) && isCircleCollider(circleB)) {
-      const collision = this.circleCircle(a, b);
-      if (collision.collision) {
-        const avoidanceVector3D = new Vector3(
-          collision.aAvoidanceVector.x,
-          collision.aAvoidanceVector.y,
-          0
-        );
-        // TODO: move both in proportion of their relative masses?
-        a.transform.position.add(avoidanceVector3D);
-        a.body.velocity.negate();
-        b.body.velocity.negate();
-      }
+      collision = this.circleCircle(a, b);
     }
     // Rect vs rect
     if (isRectangleCollider(rectangleA) && isRectangleCollider(rectangleB)) {
-      const collision = this.rectangleRectangle(a, b);
-      if (collision.collision) {
-        const avoidanceVector3D = new Vector3(
-          collision.aAvoidanceVector.x,
-          collision.aAvoidanceVector.y,
-          0
-        );
-        a.transform.position.add(avoidanceVector3D);
-        a.body.velocity.negate();
-        b.body.velocity.negate();
-      }
+      collision = this.rectangleRectangle(a, b);
     }
     // Rect vs Circ
     if (isRectangleCollider(rectangleA) && isCircleCollider(circleB)) {
-      const collision = this.rectangleCircle(a, b);
-      if (collision.collision) {
-        const avoidanceVector3D = new Vector3(
-          collision.aAvoidanceVector.x,
-          collision.aAvoidanceVector.y,
-          0
-        );
-        a.transform.position.add(avoidanceVector3D);
-        a.body.velocity.negate();
-        b.body.velocity.negate();
-      }
+      collision = this.rectangleCircle(a, b);
     }
     // Circ vs rect
     if (isCircleCollider(circleA) && isRectangleCollider(rectangleB)) {
-      const collision = this.rectangleCircle(b, a);
-      if (collision.collision) {
-        const avoidanceVector3D = new Vector3(
-          collision.aAvoidanceVector.x,
-          collision.aAvoidanceVector.y,
-          0
-        );
-        a.transform.position.add(avoidanceVector3D);
-        a.body.velocity.negate();
-        b.body.velocity.negate();
-      }
+      collision = this.rectangleCircle(b, a);
     }
     // Rect vs boundary
     if (isRectangleCollider(rectangleA) && isBoundary2DCollider(boundaryB)) {
@@ -165,26 +123,47 @@ export class CollisionSolver {
     if (isBoundary2DCollider(boundaryA) && isRectangleCollider(rectangleB)) {
       // console.info("Rectangle-boundary collision not implemented yet");
     }
+
+    // TODO: Clean me I'm dirty
+    if (collision && collision.collision) {
+      if (a.hasComponent("collisionBehavior")) {
+        a.collisionBehavior.action(collision, "a");
+      }
+      // Make sure the collisionbehavior action has logic to determine which entity they are (a or b)
+      if (b.hasComponent("collisionBehavior")) {
+        b.collisionBehavior.action(collision, "b");
+      }
+    }
   }
 
-  static circleCircle(a: Entity, b: Entity): Collision {
+  static circleCircle(a: Entity, b: Entity): Collision2D {
     const minimumDistance = b.circleCollider.radius + a.circleCollider.radius;
     const v2a = new Vector2(a.transform.position.x, a.transform.position.y);
     const v2b = new Vector2(b.transform.position.x, b.transform.position.y);
     const aSubB = new Vector2().subVectors(v2a, v2b);
-    const bSubA = new Vector2().subVectors(v2a, v2b);
+    // const bSubA = new Vector2().subVectors(v2a, v2b);
     const distance = aSubB.length();
     const collision = distance < minimumDistance;
     return {
       collision,
-      aAvoidanceVector: aSubB, // a - b
-      bAvoidanceVector: bSubA,
       overlap: minimumDistance - distance,
+      a: {
+        self: a,
+        other: b,
+        selfCollider: a.circleCollider,
+        otherCollider: b.circleCollider,
+      },
+      b: {
+        self: b,
+        other: a,
+        selfCollider: b.circleCollider,
+        otherCollider: a.circleCollider,
+      },
     };
   }
 
   // TODO: USE THIS https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-Detection
-  static rectangleRectangle(a: Entity, b: Entity): Collision {
+  static rectangleRectangle(a: Entity, b: Entity): Collision2D {
     const pA = new Vector2(a.transform.position.x, a.transform.position.y);
     const pB = new Vector2(b.transform.position.x, b.transform.position.y);
     const aTop = pA.y + a.rectangleCollider.height / 2;
@@ -197,33 +176,52 @@ export class CollisionSolver {
     const bLeft = pB.x - b.rectangleCollider.width / 2;
     const bRight = pB.x + b.rectangleCollider.width / 2;
     let collisionX = aLeft < bRight || aRight > bLeft;
-    return {
-      collision: collisionY && collisionX,
-      // TODO: USE THIS https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-Detection
+    const collision = collisionY && collisionX;
+    // return {
 
-      aAvoidanceVector: new Vector2().subVectors(pA, pB), //aSubB, // a - b
-      bAvoidanceVector: new Vector2().subVectors(pB, pA), // bSubA,
-      overlap: 0,
+    //   // TODO: USE THIS https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-Detection
+
+    //   // aAvoidanceVector: new Vector2().subVectors(pA, pB), //aSubB, // a - b
+    //   // bAvoidanceVector: new Vector2().subVectors(pB, pA), // bSubA,
+    //   overlap: 0,
+    //   entityA: a,
+    //   entityB: b,
+    // };
+    return {
+      collision,
+      overlap: 0, // TODO: actually calc this
+      a: {
+        self: a,
+        other: b,
+        selfCollider: a.rectangleCollider,
+        otherCollider: b.rectangleCollider,
+      },
+      b: {
+        self: b,
+        other: a,
+        selfCollider: b.rectangleCollider,
+        otherCollider: a.rectangleCollider,
+      },
     };
   }
 
-  static rectangleCircle(rect: Entity, circ: Entity): Collision {
+  static rectangleCircle(rectA: Entity, circB: Entity): Collision2D {
     // Using methods from: https://learnopengl.com/In-Practice/2D-Game/Collisions/Collision-Detection
     // Get vector from rectangle center to circle center
     const pRect = new Vector2(
-      rect.transform.position.x,
-      rect.transform.position.y
+      rectA.transform.position.x,
+      rectA.transform.position.y
     );
     const pCircle = new Vector2(
-      circ.transform.position.x,
-      circ.transform.position.y
+      circB.transform.position.x,
+      circB.transform.position.y
     );
     const rectToCirc = new Vector2().subVectors(pCircle, pRect);
 
     // Clamp resulting vector (vecRtoC) to rectangle half-extents
     const halfExt = new Vector2(
-      rect.rectangleCollider.width / 2,
-      rect.rectangleCollider.height / 2
+      rectA.rectangleCollider.width / 2,
+      rectA.rectangleCollider.height / 2
     );
     rectToCirc.clamp(halfExt.clone().negate(), halfExt);
 
@@ -232,20 +230,31 @@ export class CollisionSolver {
     // Add P to rectangle pos, subtract result from circle to get difference.
     const PToCircle = new Vector2().subVectors(pCircle, P);
     // If so, we have collision
-    const collision = PToCircle.length() < circ.circleCollider.radius;
+    const collision = PToCircle.length() < circB.circleCollider.radius;
 
     return {
       collision,
-
-      aAvoidanceVector: new Vector2().subVectors(pRect, pCircle), //aSubB, // a - b
-      bAvoidanceVector: new Vector2().subVectors(pCircle, pRect), // bSubA,
-      overlap: 0,
+      overlap: 0, // TODO: actually calc this
+      a: {
+        self: rectA,
+        other: circB,
+        selfCollider: rectA.rectangleCollider,
+        otherCollider: circB.circleCollider,
+      },
+      b: {
+        self: circB,
+        other: rectA,
+        selfCollider: circB.circleCollider,
+        otherCollider: rectA.rectangleCollider,
+      },
     };
   }
 
-  static circleBoundary(a: Entity, boundary: Boundary2D) {
+  static circleBoundary(a: Entity, b: Entity): Collision2D {
+    const boundary = b.boundary2DCollider;
     let collision = false;
-    let aAvoidanceVector = new Vector2();
+    let overlap = 0;
+    // let aAvoidanceVector = new Vector2();
     // Refactor for just 1 if statement
     if (
       boundary.minX &&
@@ -253,9 +262,9 @@ export class CollisionSolver {
     ) {
       // Bonk
       collision = true;
-      const overlap =
+      overlap =
         boundary.minX - (a.transform.position.x - a.circleCollider.radius);
-      aAvoidanceVector.add(new Vector2(overlap, 0));
+      // aAvoidanceVector.add(new Vector2(overlap, 0));
     }
 
     if (
@@ -264,9 +273,9 @@ export class CollisionSolver {
     ) {
       // Klonk
       collision = true;
-      const overlap =
+      overlap =
         boundary.minY - (a.transform.position.y - a.circleCollider.radius);
-      aAvoidanceVector.add(new Vector2(0, overlap));
+      // aAvoidanceVector.add(new Vector2(0, overlap));
     }
 
     if (
@@ -275,9 +284,9 @@ export class CollisionSolver {
     ) {
       // Toink
       collision = true;
-      const overlap =
+      overlap =
         boundary.maxX - (a.transform.position.x + a.circleCollider.radius);
-      aAvoidanceVector.add(new Vector2(overlap, 0));
+      // aAvoidanceVector.add(new Vector2(overlap, 0));
     }
 
     if (
@@ -286,13 +295,26 @@ export class CollisionSolver {
     ) {
       // BLAM
       collision = true;
-      const overlap =
+      overlap =
         boundary.maxY - (a.transform.position.y + a.circleCollider.radius);
-      aAvoidanceVector.add(new Vector2(0, overlap));
+      // aAvoidanceVector.add(new Vector2(0, overlap));
     }
+
     return {
       collision,
-      aAvoidanceVector,
+      overlap,
+      a: {
+        self: a,
+        other: b,
+        selfCollider: a.circleCollider,
+        otherCollider: b.boundary2DCollider,
+      },
+      b: {
+        self: b,
+        other: b,
+        selfCollider: b.boundary2DCollider,
+        otherCollider: a.circleCollider,
+      },
     };
   }
 }

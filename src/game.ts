@@ -85,7 +85,7 @@ export function initialize(): Game {
   title.sprite.setTexture(titleImg);
 
   const pipe = new Entity(game);
-  pipe.transform.position.set(2, -3.5, -0.05);
+  pipe.transform.position.set(2, -1.5, -0.05);
   pipe.sprite.setTexture(longpipeImg);
   pipe.debugBox = new DebugBox(new Vector3(0.8, 6, 1));
   pipe.rectangleCollider = new RectangleCollider(0.8, 6);

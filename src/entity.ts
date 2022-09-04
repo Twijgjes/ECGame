@@ -7,6 +7,7 @@ import {
   isCollider2D,
   RectangleCollider,
 } from "./components/Collision";
+import { CollisionBehavior } from "./components/CollisionBehavior";
 import { DebugBox, DebugSphere } from "./components/Debug";
 import { CMesh } from "./components/Mesh";
 import { CPlane } from "./components/Plane";
@@ -44,6 +45,7 @@ export type IComponent =
   | CircleCollider
   | Boundary2DCollider
   | RectangleCollider
+  | CollisionBehavior
   | DebugBox
   | DebugSphere;
 const ComponentMap = {
@@ -57,6 +59,7 @@ const ComponentMap = {
   circleCollider: CircleCollider,
   boundary2DCollider: Boundary2DCollider,
   rectangleCollider: RectangleCollider,
+  collisionBehavior: CollisionBehavior,
   debugBox: DebugBox,
   debugSphere: DebugSphere,
 };
@@ -72,6 +75,7 @@ export class Entity {
   circleCollider: CircleCollider;
   boundary2DCollider: Boundary2DCollider;
   rectangleCollider: RectangleCollider;
+  collisionBehavior: CollisionBehavior;
   debugBox: DebugBox;
   debugSphere: DebugSphere;
 
