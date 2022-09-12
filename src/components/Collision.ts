@@ -1,5 +1,5 @@
 import { Vector2 } from "three";
-import { Entity } from "../entity";
+import { BaseComponent, Entity } from "../entity";
 
 // Implement for 2D: https://www.npmjs.com/package/detect-collisions
 // For 3D https://github.com/kripken/ammo.js
@@ -14,15 +14,6 @@ export function isCollider2D(obj: any): obj is Boundary2DCollider {
 export abstract class Collider2D {
   public readonly type2D: SHAPE2D;
 }
-
-// export interface Collision2D {
-//   collision: boolean; // Wether the two have collided or not
-//   aAvoidanceVector: Vector2; // The direction directly away from the center of b
-//   bAvoidanceVector: Vector2; // The direction directly away from the center of a
-//   overlap: number; // Negative when not overlapping
-//   entityA: Entity;
-//   entityB: Entity;
-// }
 
 export interface Collision2DPerspective {
   self: Entity;
@@ -48,7 +39,8 @@ export interface Boundary2D {
 export function isBoundary2DCollider(obj: any): obj is Boundary2DCollider {
   return !!obj && !!obj.type2D && obj.type2D === "BOUNDARY";
 }
-export class Boundary2DCollider implements Collider2D {
+export class Boundary2DCollider implements Collider2D, BaseComponent {
+  public entity: Entity;
   public readonly type2D = "BOUNDARY";
   constructor(
     public maxX?: number,
@@ -61,7 +53,8 @@ export class Boundary2DCollider implements Collider2D {
 export function isCircleCollider(obj: any): obj is CircleCollider {
   return !!obj && !!obj.type2D && obj.type2D === "CIRCLE";
 }
-export class CircleCollider implements Collider2D {
+export class CircleCollider implements Collider2D, BaseComponent {
+  public entity: Entity;
   public readonly type2D = "CIRCLE";
   constructor(public radius: number = 1) {}
 }
@@ -69,9 +62,14 @@ export class CircleCollider implements Collider2D {
 export function isRectangleCollider(obj: any): obj is RectangleCollider {
   return !!obj && !!obj.type2D && obj.type2D === "RECTANGLE";
 }
-export class RectangleCollider implements Collider2D {
+export class RectangleCollider implements Collider2D, BaseComponent {
+  public entity: Entity;
   public readonly type2D = "RECTANGLE";
-  constructor(public width: number = 1, public height: number = 1) {}
+  constructor(
+    entity: Entity,
+    public width: number = 1,
+    public height: number = 1
+  ) {}
 }
 
 export class CollisionSolver {
@@ -127,11 +125,11 @@ export class CollisionSolver {
     // TODO: Clean me I'm dirty
     if (collision && collision.collision) {
       if (a.hasComponent("collisionBehavior")) {
-        a.collisionBehavior.action(collision, "a");
+        a.collisionBehavior.action(collision, collision.a);
       }
       // Make sure the collisionbehavior action has logic to determine which entity they are (a or b)
       if (b.hasComponent("collisionBehavior")) {
-        b.collisionBehavior.action(collision, "b");
+        b.collisionBehavior.action(collision, collision.b);
       }
     }
   }
@@ -231,10 +229,11 @@ export class CollisionSolver {
     const PToCircle = new Vector2().subVectors(pCircle, P);
     // If so, we have collision
     const collision = PToCircle.length() < circB.circleCollider.radius;
+    const overlap = circB.circleCollider.radius - PToCircle.length(); // TODO: still not right maybe, doublecheck me
 
     return {
       collision,
-      overlap: 0, // TODO: actually calc this
+      overlap, // TODO: actually calc this
       a: {
         self: rectA,
         other: circB,

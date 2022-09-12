@@ -1,4 +1,4 @@
-import { Color, Euler, Vector3 } from "three";
+import { Color, Vector3 } from "three";
 import { Entity, IUpdateable } from "./entity";
 import { Engine, threeSetup } from "./threeSetup";
 import groundImg from "./assets/images/ground.png";
@@ -49,12 +49,14 @@ export function initialize(): Game {
   // polygon.mesh.material = new MeshPhongMaterial({ color: 0xff0 });
   // polygon.transform.scale.setScalar(0.5);
   // polygon.body.gravity = new Vector3(0, -9.81, 0);
+  const moveSpeed = -2;
 
   const ground = new Entity(game);
   ground.sprite.setTexture(groundImg);
   ground.transform.position.set(0, -3.1, 0);
-  ground.boundary2DCollider.minY = -3.1;
-  // ground.hasComponent("body");
+  ground.boundary2DCollider.minY = -2.4;
+  ground.body.velocity = new Vector3(moveSpeed, 0, 0);
+  // ground.debugBox = new DebugBox(new Vector3(8, 0.4, 1));
 
   const bushes = new Entity(game);
   bushes.sprite.setTexture(bushesImg);
@@ -70,13 +72,25 @@ export function initialize(): Game {
   punchbird.plane.setTexture(berdArmBentImg);
   // punchbird.transform.scale.multiplyScalar(1.4);
   // (punchbird.plane.mesh.material as MeshBasicMaterial).wireframe = true;
-  punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
+  // punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
   punchbird.body.velocity = new Vector3(5, 0, 0);
   punchbird.body.acceleration = new Vector3(0, -10, 0);
   punchbird.clickBoost;
-  punchbird.circleCollider.radius = 1;
+  punchbird.circleCollider.radius = 0.4;
   punchbird.debugSphere = new DebugSphere(0.4);
-  // punchbird.
+  punchbird.collisionBehavior.action = (collision, fromMyPerspective) => {
+    // console.info("overlap:", collision.overlap);
+    // Move entity out of collision range
+    const vel = fromMyPerspective.self.body.velocity;
+    const direction = vel.clone().negate().setLength(collision.overlap);
+    fromMyPerspective.self.transform.position.add(direction);
+    // Hacky way of reflection
+    vel.multiply(
+      Math.abs(vel.y) > Math.abs(vel.x)
+        ? new Vector3(0, -1, 0)
+        : new Vector3(-1, 0, 0)
+    );
+  };
 
   const title = new Entity(game);
   title.transform.position.set(0, 2.6, 0);
@@ -88,7 +102,7 @@ export function initialize(): Game {
   pipe.transform.position.set(2, -1.5, -0.05);
   pipe.sprite.setTexture(longpipeImg);
   pipe.debugBox = new DebugBox(new Vector3(0.8, 6, 1));
-  pipe.rectangleCollider = new RectangleCollider(0.8, 6);
+  pipe.rectangleCollider = new RectangleCollider(pipe, 0.8, 6);
 
   // const ambientLight = new Entity(game);
   // ambientLight.c.light = new Light(new AmbientLight(0x404040, 1));

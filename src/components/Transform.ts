@@ -1,13 +1,12 @@
 import { Vector3, Quaternion } from "three";
+import { BaseComponent, Entity } from "../entity";
 
-export class Transform {
-  position: Vector3;
-  rotation: Quaternion;
-  scale: Vector3;
+export class Transform implements BaseComponent {
+  public entity: Entity;
 
-  constructor(position?: Vector3, rotation?: Quaternion, scale?: Vector3) {
-    this.position = position ? position : new Vector3();
-    this.rotation = rotation ? rotation : new Quaternion();
-    this.scale = scale ? scale : new Vector3(1, 1, 1);
-  }
+  constructor(
+    public position = new Vector3(0, 0, 0),
+    public rotation = new Quaternion(),
+    public scale = new Vector3(1, 1, 1)
+  ) {}
 }

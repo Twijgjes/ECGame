@@ -1,11 +1,11 @@
-import { Vector3 } from "three";
-import { Entity, IInitializedComponent } from "../entity";
+import { BaseComponent, Entity, IInitializedComponent } from "../entity";
 
-export class ClickBoost implements IInitializedComponent {
+export class ClickBoost implements BaseComponent, IInitializedComponent {
+  public entity: Entity;
   constructor() {}
 
-  init(entity: Entity) {
-    const { body } = entity;
+  init() {
+    const { body } = this.entity;
     document.addEventListener("keypress", (event) => {
       if (event.code === "Space") {
         body.velocity.y += 6;

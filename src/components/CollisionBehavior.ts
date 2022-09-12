@@ -1,32 +1,19 @@
-import { Vector2 } from "three";
-import { Entity } from "../entity";
-import { Collision2D } from "./Collision";
+import { BaseComponent, Entity } from "../entity";
+import { Collision2D, Collision2DPerspective } from "./Collision";
 
-export interface CollisionFromMyPerspective extends Collision2D {
-  me: Entity;
-  them: Entity;
-  meAvoidanceVector: Vector2;
-  themAvoidanceVector: Vector2;
-}
-
-export class CollisionBehavior {
+export class CollisionBehavior implements BaseComponent {
+  public entity: Entity;
   constructor(
-    private _action: (collision: Collision2D, me: string) => void = () => {}
+    private _action: (
+      collision: Collision2D,
+      fromMyPerspective: Collision2DPerspective
+    ) => void = () => {}
   ) {}
 
-  public action(collision: Collision2D, me: string) {
-    // let me, them, meAvoidanceVector, themAvoidanceVector;
-    // if (collision.entityA.hasComponent("collisionBehavior") === this) {
-    //   me = collision.entityA;
-    //   meAvoidanceVector = collision.aAvoidanceVector;
-    //   them = collision.entityB;
-    //   themAvoidanceVector = collision.bAvoidanceVector;
-    // } else {
-    //   me = collision.entityB;
-    //   meAvoidanceVector = collision.bAvoidanceVector;
-    //   them = collision.entityA;
-    //   themAvoidanceVector = collision.aAvoidanceVector;
-    // }
-    this._action(collision, me);
+  public action(
+    collision: Collision2D,
+    fromMyPerspective: Collision2DPerspective
+  ) {
+    this._action(collision, fromMyPerspective);
   }
 }

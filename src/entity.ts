@@ -1,4 +1,4 @@
-import { Scene, Light } from "three";
+import { Scene, Vector3 } from "three";
 import { Body } from "./components/Body";
 import { ClickBoost } from "./components/ClickBoost";
 import {
@@ -9,6 +9,7 @@ import {
 } from "./components/Collision";
 import { CollisionBehavior } from "./components/CollisionBehavior";
 import { DebugBox, DebugSphere } from "./components/Debug";
+import { Light } from "./components/Light";
 import { CMesh } from "./components/Mesh";
 import { CPlane } from "./components/Plane";
 import { CSprite } from "./components/Sprite";
@@ -33,8 +34,8 @@ import { Game } from "./game";
 // try making operator overloading with valueOf or toString
 // and then saving context to a singleton on the first call
 // using the context on the second call and emptying it again
-
 export type IComponent =
+  | BaseComponent
   | Transform
   | Body
   | CMesh
@@ -90,10 +91,12 @@ export class Entity {
       get(target: Entity, name: keyof Entity) {
         const nname = name as keyof typeof ComponentMap;
         if (ComponentMap[nname] && !target[name]) {
+          // @ts-expect-error
           const newComponent = new ComponentMap[nname]();
+          newComponent.entity = target.proxy;
           (target[name] as IComponent) = newComponent;
           if (isInitedComponent(newComponent)) {
-            newComponent.init(target.proxy);
+            newComponent.init();
           }
           if (isSceneProp(newComponent)) {
             newComponent.addToScene(game.engine.scene);
@@ -106,6 +109,7 @@ export class Entity {
       },
       set(target: Entity, name: keyof Entity, value: IComponent) {
         // console.info("set", name);
+        value.entity = target.proxy;
         const nname = name as keyof typeof ComponentMap;
         if (ComponentMap[nname]) {
           const oldComponent = target[name];
@@ -117,7 +121,7 @@ export class Entity {
           // Set up new component
           (target[name] as IComponent) = value;
           if (isInitedComponent(value)) {
-            value.init(target.proxy);
+            value.init();
           }
           if (isSceneProp(value)) {
             value.addToScene(game.engine.scene);
@@ -165,17 +169,22 @@ export class Entity {
   }
 }
 
+export interface BaseComponent {
+  entity: Entity;
+}
+
 export interface IUpdateable {
   update: (deltaSeconds: number) => void;
 }
 export interface IUpdateableComponent {
+  // TODO: remove entity, not needed anymore
   update: (deltaSeconds: number, entity: Entity) => void;
 }
 function isUpdateableComponent(obj: any): obj is IUpdateableComponent {
   return !!obj && !!obj.update;
 }
 export interface IInitializedComponent {
-  init: (entity: Entity) => void;
+  init: () => void;
 }
 function isInitedComponent(obj: any): obj is IInitializedComponent {
   return !!obj.init;

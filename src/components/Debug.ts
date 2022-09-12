@@ -6,9 +6,17 @@ import {
   MeshBasicMaterial,
   SphereGeometry,
 } from "three";
-import { Entity, ISceneProp, IUpdateableComponent } from "../entity";
+import {
+  BaseComponent,
+  Entity,
+  ISceneProp,
+  IUpdateableComponent,
+} from "../entity";
 
-export class DebugBox implements IUpdateableComponent, ISceneProp {
+export class DebugBox
+  implements IUpdateableComponent, ISceneProp, BaseComponent
+{
+  public entity: Entity;
   private box: Mesh;
   constructor(public size: Vector3 = new Vector3(1, 1, 1)) {
     const geometry = new BoxGeometry(size.x, size.y, size.z);
@@ -32,7 +40,10 @@ export class DebugBox implements IUpdateableComponent, ISceneProp {
   }
 }
 
-export class DebugSphere implements IUpdateableComponent, ISceneProp {
+export class DebugSphere
+  implements IUpdateableComponent, ISceneProp, BaseComponent
+{
+  public entity: Entity;
   private sphere: Mesh;
   constructor(public radius: number = 1) {
     const geometry = new SphereGeometry(this.radius, 7, 7);

@@ -7,10 +7,16 @@ import {
   Vector3,
   NearestFilter,
 } from "three";
-import { IUpdateableComponent, ISceneProp, Entity } from "../entity";
+import {
+  IUpdateableComponent,
+  ISceneProp,
+  Entity,
+  BaseComponent,
+} from "../entity";
 import punchbirdImg from "../assets/images/punchbird.png";
 
-export class CPlane implements IUpdateableComponent, ISceneProp {
+export class CPlane implements IUpdateableComponent, ISceneProp, BaseComponent {
+  public entity: Entity;
   mesh: Mesh;
 
   constructor(

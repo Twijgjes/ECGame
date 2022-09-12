@@ -1,7 +1,13 @@
 import { Mesh, BoxGeometry, MeshBasicMaterial, Scene } from "three";
-import { IUpdateableComponent, ISceneProp, Entity } from "../entity";
+import {
+  IUpdateableComponent,
+  ISceneProp,
+  Entity,
+  BaseComponent,
+} from "../entity";
 
-export class CMesh implements IUpdateableComponent, ISceneProp {
+export class CMesh implements IUpdateableComponent, ISceneProp, BaseComponent {
+  public entity: Entity;
   mesh: Mesh;
 
   constructor(mesh?: Mesh) {

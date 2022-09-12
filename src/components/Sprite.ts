@@ -7,10 +7,18 @@ import {
   NearestFilter,
   Scene,
 } from "three";
-import { Entity, ISceneProp, IUpdateableComponent } from "../entity";
+import {
+  BaseComponent,
+  Entity,
+  ISceneProp,
+  IUpdateableComponent,
+} from "../entity";
 import punchbirdImg from "../assets/images/punchbird.png";
 
-export class CSprite implements IUpdateableComponent, ISceneProp {
+export class CSprite
+  implements IUpdateableComponent, ISceneProp, BaseComponent
+{
+  public entity: Entity;
   private _texture: Texture;
   constructor(
     textureUrl = punchbirdImg,

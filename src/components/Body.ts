@@ -1,7 +1,8 @@
 import { Vector3, Quaternion } from "three";
-import { IUpdateableComponent, Entity } from "../entity";
+import { IUpdateableComponent, Entity, BaseComponent } from "../entity";
 
-export class Body implements IUpdateableComponent {
+export class Body implements IUpdateableComponent, BaseComponent {
+  public entity: Entity;
   constructor(
     public velocity = new Vector3(),
     public acceleration?: Vector3,
