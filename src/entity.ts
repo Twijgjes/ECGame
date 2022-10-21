@@ -9,6 +9,7 @@ import {
 } from "./components/Collision";
 import { CollisionBehavior } from "./components/CollisionBehavior";
 import { DebugBox, DebugSphere } from "./components/Debug";
+import { InfiniteScroll } from "./components/InfiniteScroll";
 import { Light } from "./components/Light";
 import { CMesh } from "./components/Mesh";
 import { CPlane } from "./components/Plane";
@@ -48,7 +49,8 @@ export type IComponent =
   | RectangleCollider
   | CollisionBehavior
   | DebugBox
-  | DebugSphere;
+  | DebugSphere
+  | InfiniteScroll;
 const ComponentMap = {
   transform: Transform,
   body: Body,
@@ -63,6 +65,7 @@ const ComponentMap = {
   collisionBehavior: CollisionBehavior,
   debugBox: DebugBox,
   debugSphere: DebugSphere,
+  infiniteScroll: InfiniteScroll,
 };
 
 export class Entity {
@@ -79,6 +82,7 @@ export class Entity {
   collisionBehavior: CollisionBehavior;
   debugBox: DebugBox;
   debugSphere: DebugSphere;
+  infiniteScroll: InfiniteScroll;
 
   private proxy: Entity;
   private unwrapped: Entity;

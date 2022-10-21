@@ -9,6 +9,7 @@ import titleImg from "./assets/images/title.png";
 import berdArmBentImg from "./assets/images/punchbird_arm_bent.png";
 import { CollisionSolver, RectangleCollider } from "./components/Collision";
 import { DebugBox, DebugSphere } from "./components/Debug";
+import { InfiniteScroll } from "./components/InfiniteScroll";
 
 export interface Game {
   engine: Engine;
@@ -51,20 +52,55 @@ export function initialize(): Game {
   // polygon.body.gravity = new Vector3(0, -9.81, 0);
   const moveSpeed = -2;
 
-  const ground = new Entity(game);
-  ground.sprite.setTexture(groundImg);
-  ground.transform.position.set(0, -3.1, 0);
-  ground.boundary2DCollider.minY = -2.4;
-  ground.body.velocity = new Vector3(moveSpeed, 0, 0);
-  // ground.debugBox = new DebugBox(new Vector3(8, 0.4, 1));
+  const parallaxEntity = (
+    width: number,
+    spawnPos: Vector3,
+    textureUrl: string,
+    moveSpeedMultiplier = 1,
+    hasBoundary = false
+  ) => {
+    const entity = new Entity(game);
+    entity.sprite.setTexture(textureUrl);
+    entity.transform.position.copy(spawnPos);
+    if (hasBoundary) {
+      entity.boundary2DCollider.minY = -2.4;
+    }
+    entity.body.velocity = new Vector3(moveSpeed * moveSpeedMultiplier, 0, 0);
+    entity.infiniteScroll = new InfiniteScroll(
+      -(width * 2),
+      new Vector3(width * 2, spawnPos.y, spawnPos.z)
+    );
+  };
 
-  const bushes = new Entity(game);
-  bushes.sprite.setTexture(bushesImg);
-  bushes.transform.position.set(0, -1.7, -0.1);
+  const gw = 5.95;
+  let groundStart = -gw * 2;
+  const gxp = () => (groundStart += gw);
+  const groundEntities = [
+    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
+    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
+    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
+    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
+  ];
 
-  const clouds = new Entity(game);
-  clouds.sprite.setTexture(cloudsImg);
-  clouds.transform.position.set(0, -0.7, -0.2);
+  const bushWidth = 5.95;
+  let bushStartX = -bushWidth * 2;
+  const xPos = () => (bushStartX += bushWidth);
+  const bushEntities = [
+    parallaxEntity(bushWidth, new Vector3(xPos(), -1.7, -0.1), bushesImg, 0.5),
+    parallaxEntity(bushWidth, new Vector3(xPos(), -1.7, -0.1), bushesImg, 0.5),
+    parallaxEntity(bushWidth, new Vector3(xPos(), -1.7, -0.1), bushesImg, 0.5),
+    parallaxEntity(bushWidth, new Vector3(xPos(), -1.7, -0.1), bushesImg, 0.5),
+  ];
+
+  const cloudWidth = 5.95;
+  let cloudStartX = -cloudWidth * 2;
+  const cxp = () => (cloudStartX += cloudWidth);
+  const cloudEntities = [
+    parallaxEntity(cloudWidth, new Vector3(cxp(), -0.7, -0.2), cloudsImg, 0.2),
+    parallaxEntity(cloudWidth, new Vector3(cxp(), -0.7, -0.2), cloudsImg, 0.2),
+    parallaxEntity(cloudWidth, new Vector3(cxp(), -0.7, -0.2), cloudsImg, 0.2),
+    parallaxEntity(cloudWidth, new Vector3(cxp(), -0.7, -0.2), cloudsImg, 0.2),
+  ];
 
   const punchbird = new Entity(game);
   // punchbird.sprite.setTexture(berdArmBentImg);
@@ -73,7 +109,7 @@ export function initialize(): Game {
   // punchbird.transform.scale.multiplyScalar(1.4);
   // (punchbird.plane.mesh.material as MeshBasicMaterial).wireframe = true;
   // punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
-  punchbird.body.velocity = new Vector3(5, 0, 0);
+  punchbird.body.velocity = new Vector3(0, 0, 0);
   punchbird.body.acceleration = new Vector3(0, -10, 0);
   punchbird.clickBoost;
   punchbird.circleCollider.radius = 0.4;
