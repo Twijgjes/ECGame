@@ -8,7 +8,7 @@ export class ClickBoost implements BaseComponent, IInitializedComponent {
     const { body } = this.entity;
     document.addEventListener("keypress", (event) => {
       if (event.code === "Space") {
-        body.velocity.y += 6;
+        body.velocity.y += 8;
       }
     });
   }

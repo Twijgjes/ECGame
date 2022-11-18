@@ -13,8 +13,9 @@ import { InfiniteScroll } from "./components/InfiniteScroll";
 import { Light } from "./components/Light";
 import { CMesh } from "./components/Mesh";
 import { CPlane } from "./components/Plane";
+import { Spawner } from "./components/Spawner";
 import { CSprite } from "./components/Sprite";
-import { Transform } from "./components/Transform";
+import { ParentTransform, Transform } from "./components/Transform";
 import { Game } from "./game";
 
 /**
@@ -38,6 +39,7 @@ import { Game } from "./game";
 export type IComponent =
   | BaseComponent
   | Transform
+  | ParentTransform
   | Body
   | CMesh
   | Light
@@ -50,9 +52,11 @@ export type IComponent =
   | CollisionBehavior
   | DebugBox
   | DebugSphere
+  | Spawner
   | InfiniteScroll;
 const ComponentMap = {
   transform: Transform,
+  parentTransform: ParentTransform,
   body: Body,
   mesh: CMesh,
   light: Light,
@@ -66,10 +70,12 @@ const ComponentMap = {
   debugBox: DebugBox,
   debugSphere: DebugSphere,
   infiniteScroll: InfiniteScroll,
+  spawner: Spawner,
 };
 
 export class Entity {
   transform: Transform;
+  parentTransform: ParentTransform;
   body: Body;
   mesh: CMesh;
   light: Light;
@@ -83,6 +89,7 @@ export class Entity {
   debugBox: DebugBox;
   debugSphere: DebugSphere;
   infiniteScroll: InfiniteScroll;
+  spawner: Spawner;
 
   private proxy: Entity;
   private unwrapped: Entity;
