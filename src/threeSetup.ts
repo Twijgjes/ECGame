@@ -10,6 +10,7 @@ export interface Engine {
   scene: Scene;
   camera: Camera;
   renderer: Renderer;
+  canvasElement: HTMLCanvasElement;
 }
 
 export function threeSetup(element: HTMLElement): Engine {
@@ -24,6 +25,6 @@ export function threeSetup(element: HTMLElement): Engine {
 
   const renderer = new WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  element.appendChild(renderer.domElement);
-  return { scene, camera, renderer };
+  const canvasElement = element.appendChild(renderer.domElement);
+  return { scene, camera, renderer, canvasElement };
 }

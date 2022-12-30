@@ -1,4 +1,4 @@
-import { Color, Euler, Quaternion, Vector3 } from "three";
+import { Color, Euler, Quaternion, Sprite, Vector3 } from "three";
 import { Entity, IUpdateable } from "./entity";
 import { Engine, threeSetup } from "./threeSetup";
 import groundImg from "./assets/images/ground.png";
@@ -6,18 +6,22 @@ import bushesImg from "./assets/images/bushes.png";
 import cloudsImg from "./assets/images/clouds.png";
 import longpipeImg from "./assets/images/longpipe.png";
 import titleImg from "./assets/images/title.png";
-import berdArmBentImg from "./assets/images/punchbird_arm_bent.png";
+import fistImg from "./assets/images/FIST.png";
 import { CollisionSolver, RectangleCollider } from "./components/Collision";
-import { DebugBox, DebugSphere } from "./components/Debug";
+import { DebugBox } from "./components/Debug";
 import { InfiniteScroll } from "./components/InfiniteScroll";
 import { ParentTransform } from "./components/Transform";
 import { Spawner } from "./components/Spawner";
+import { Pause } from "./behaviors/Pause";
+import { createPunchbird } from "./entities/punchbird";
+import { createRestartButton } from "./entities/restartButton";
 
 export interface Game {
   engine: Engine;
   updateables: IUpdateable[];
   collidables2D: Entity[];
   lastTick: number;
+  paused: boolean;
 }
 
 export function initialize(): Game {
@@ -27,9 +31,11 @@ export function initialize(): Game {
     updateables: [] as IUpdateable[],
     collidables2D: [] as Entity[],
     lastTick: Date.now(),
+    paused: false,
   };
   game.engine.camera.position.z = 5;
   game.engine.scene.background = new Color("rgb(81,189,205)");
+  new Pause(game);
 
   // Basic way of making pixels
   // const geometry = new BoxGeometry();
@@ -104,41 +110,13 @@ export function initialize(): Game {
     parallaxEntity(cloudWidth, new Vector3(cxp(), -0.7, -0.2), cloudsImg, 0.2),
   ];
 
-  const punchbird = new Entity(game);
-  // punchbird.sprite.setTexture(berdArmBentImg);
-  punchbird.plane;
-  punchbird.plane.setTexture(berdArmBentImg);
-  punchbird.transform.rotation.setFromEuler(new Euler(0, 0, 180), true);
-  // punchbird.transform.scale.multiplyScalar(1.4);
-  // (punchbird.plane.mesh.material as MeshBasicMaterial).wireframe = true;
-  // punchbird.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.01));
-  punchbird.body.velocity = new Vector3(0, 0, 0);
-  punchbird.body.acceleration = new Vector3(0, -20, 0);
-  // punchbird.body.rotationVelocity(1, 1, 1);
-  punchbird.clickBoost;
-  punchbird.circleCollider.radius = 0.4;
-  punchbird.debugSphere = new DebugSphere(0.4);
-  punchbird.collisionBehavior.action = (collision, fromMyPerspective) => {
-    // console.info("overlap:", collision.overlap);
-    // Move entity out of collision range
-    const vel = fromMyPerspective.self.body.velocity;
-    const direction = vel.clone().negate().setLength(collision.overlap);
-    fromMyPerspective.self.transform.position.add(direction);
-    // Hacky way of reflection
-    vel.multiply(
-      Math.abs(vel.y) > Math.abs(vel.x)
-        ? new Vector3(0, -1, 0)
-        : new Vector3(-1, 0, 0)
-    );
-  };
+  const punchbird = createPunchbird(game);
 
   const title = new Entity(game);
   title.transform.position.set(0, 2.6, 0);
   // title.sprite.sprite.rotation.set(90, 90, 90);
   // title.body.rotationVelocity.setFromEuler(new Euler(1, 1, 0.1));
   title.sprite.setTexture(titleImg);
-
-  // TODO: uuhhhh find some way to sync up both pipes or somethin fuckkk
 
   const pipePairFactory = () => {
     // Make top pipe
@@ -188,15 +166,14 @@ export function initialize(): Game {
     new Vector3(0, 3, 0)
   );
 
-  // const ambientLight = new Entity(game);
-  // ambientLight.c.light = new Light(new AmbientLight(0x404040, 1));
-  // console.info(ambientLight.c.light);
-  // game.engine.scene.add(ambientLight.c.light.light);
-
-  // const lamp = new Entity(game);
-  // lamp.c.light.light.position.y = 5;
-  // lamp.c.light.light.position.z = 5;
-  // game.engine.scene.add(lamp.c.light.light);
+  const fistFactory = (debug = false) => {
+    const fist = new Entity(game);
+    fist.plane.setTexture(fistImg);
+    return fist;
+  };
+  const fist = fistFactory();
+  fist.transform.position.x = -2;
+  fist.transform.position.y = 3;
 
   return game;
 }
@@ -205,18 +182,27 @@ export function start(game: Game) {
   update(game);
 }
 
+export function gameOver(game: Game) {
+  // Spawn restart button
+  game.paused = true;
+  const restartbutton = createRestartButton(game);
+}
+
 function update(game: Game) {
   requestAnimationFrame(() => update(game));
   // Determine the delta between the last tick and this one
-  const now = Date.now();
-  const deltaSeconds = (now - game.lastTick) / 1000;
-  game.lastTick = now;
-  for (const updateable of game.updateables) {
-    updateable.update(deltaSeconds);
+  if (!game.paused) {
+    const now = Date.now();
+    const deltaSeconds = (now - game.lastTick) / 1000;
+    game.lastTick = now;
+
+    // Loop through entities
+    // If entity can be updated, do so
+    for (const updateable of game.updateables) {
+      updateable.update(deltaSeconds);
+    }
+    CollisionSolver.solveCollisions(game.collidables2D);
   }
-  CollisionSolver.solveCollisions(game.collidables2D);
 
   game.engine.renderer.render(game.engine.scene, game.engine.camera);
-  // Loop through entities
-  // If entity can be updated, do so
 }

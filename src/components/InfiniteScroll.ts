@@ -6,7 +6,7 @@ export class InfiniteScroll implements BaseComponent {
 
   constructor(public resetPastX = -5, public startPos = new Vector3()) {}
 
-  update(deltaSeconds: number) {
+  update(_: number) {
     const position = this.entity.transform.position;
     if (this.entity.transform.position.x < this.resetPastX) {
       // TODO: destroyFunc on entity?

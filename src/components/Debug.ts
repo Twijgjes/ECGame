@@ -27,8 +27,8 @@ export class DebugBox
     this.box = new Mesh(geometry, material);
   }
 
-  update(_: number, entity: Entity) {
-    this.box.position.copy(entity.transform.position);
+  update(_: number) {
+    this.box.position.copy(this.entity.transform.position);
   }
 
   addToScene(scene: Scene) {
@@ -54,8 +54,8 @@ export class DebugSphere
     this.sphere = new Mesh(geometry, material);
   }
 
-  update(_: number, entity: Entity) {
-    this.sphere.position.copy(entity.transform.position);
+  update(_: number) {
+    this.sphere.position.copy(this.entity.transform.position);
   }
 
   addToScene(scene: Scene) {

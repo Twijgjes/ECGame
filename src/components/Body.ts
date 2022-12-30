@@ -9,13 +9,13 @@ export class Body implements IUpdateableComponent, BaseComponent {
     public rotationVelocity = new Quaternion()
   ) {}
 
-  update(deltaSeconds: number, entity: Entity) {
+  update(deltaSeconds: number) {
     if (this.acceleration) {
       this.velocity.add(this.acceleration.clone().multiplyScalar(deltaSeconds));
     }
-    entity.transform.position.add(
+    this.entity.transform.position.add(
       this.velocity.clone().multiplyScalar(deltaSeconds)
     );
-    entity.transform.rotation.multiply(this.rotationVelocity);
+    this.entity.transform.rotation.multiply(this.rotationVelocity);
   }
 }

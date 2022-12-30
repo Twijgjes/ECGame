@@ -48,8 +48,8 @@ export class CSprite
     return this._texture;
   }
 
-  update(_: number, entity: Entity) {
-    this.sprite.position.copy(entity.transform.position).add(this.offset);
+  update(_: number) {
+    this.sprite.position.copy(this.entity.transform.position).add(this.offset);
   }
 
   addToScene(scene: Scene) {

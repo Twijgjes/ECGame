@@ -12,7 +12,7 @@ export class ParentTransform implements BaseComponent, IUpdateableComponent {
 
   constructor(private children: OffsetEntity[]) {}
 
-  update(deltaSeconds: number, entity: Entity) {
+  update(deltaSeconds: number) {
     for (const child of this.children) {
       child.entity.transform.position.copy(
         this.entity.transform.position.clone().add(child.offsetPosition)

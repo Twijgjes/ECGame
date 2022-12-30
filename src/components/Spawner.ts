@@ -16,7 +16,7 @@ export class Spawner implements BaseComponent, IUpdateableComponent {
     this.spawnPool = new Array<Entity>();
   }
 
-  update(deltaSeconds: number, entity: Entity) {
+  update() {
     if (Date.now() - this.lastSpawnTime > this.spawnTimerMs) {
       this.lastSpawnTime = Date.now();
       this.spawn();
@@ -25,7 +25,6 @@ export class Spawner implements BaseComponent, IUpdateableComponent {
 
   spawn() {
     let entity;
-    console.info("🍆 Spawining poollength:", this.spawnPool.length);
     if (this.spawnPool.length >= this.spawnPoolSize) {
       entity = this.spawnPool.pop();
     } else {

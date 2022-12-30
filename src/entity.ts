@@ -1,6 +1,6 @@
 import { Scene, Vector3 } from "three";
 import { Body } from "./components/Body";
-import { ClickBoost } from "./components/ClickBoost";
+import { ClickBoost } from "./behaviors/ClickBoost";
 import {
   Boundary2DCollider,
   CircleCollider,
@@ -45,7 +45,6 @@ export type IComponent =
   | Light
   | CSprite
   | CPlane
-  | ClickBoost
   | CircleCollider
   | Boundary2DCollider
   | RectangleCollider
@@ -62,7 +61,6 @@ const ComponentMap = {
   light: Light,
   sprite: CSprite,
   plane: CPlane,
-  clickBoost: ClickBoost,
   circleCollider: CircleCollider,
   boundary2DCollider: Boundary2DCollider,
   rectangleCollider: RectangleCollider,
@@ -81,7 +79,6 @@ export class Entity {
   light: Light;
   sprite: CSprite;
   plane: CPlane;
-  clickBoost: ClickBoost;
   circleCollider: CircleCollider;
   boundary2DCollider: Boundary2DCollider;
   rectangleCollider: RectangleCollider;
@@ -94,8 +91,7 @@ export class Entity {
   private proxy: Entity;
   private unwrapped: Entity;
 
-  constructor(private game: Game, public debug: boolean = false) {
-    // this.entity = this;
+  constructor(public readonly game: Game, public debug: boolean = false) {
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
     this.proxy = new Proxy(this, {
       // https://www.typescriptlang.org/docs/handbook/2/keyof-types.html
@@ -119,7 +115,6 @@ export class Entity {
         return target[name];
       },
       set(target: Entity, name: keyof Entity, value: IComponent) {
-        // console.info("set", name);
         value.entity = target.proxy;
         const nname = name as keyof typeof ComponentMap;
         if (ComponentMap[nname]) {
@@ -168,7 +163,7 @@ export class Entity {
       }
 
       if (isUpdateableComponent(updateable)) {
-        updateable.update(deltaSeconds, this.proxy);
+        updateable.update(deltaSeconds);
       }
     }
   }
@@ -189,7 +184,7 @@ export interface IUpdateable {
 }
 export interface IUpdateableComponent {
   // TODO: remove entity, not needed anymore
-  update: (deltaSeconds: number, entity: Entity) => void;
+  update: (deltaSeconds: number) => void;
 }
 function isUpdateableComponent(obj: any): obj is IUpdateableComponent {
   return !!obj && !!obj.update;
@@ -199,6 +194,13 @@ export interface IInitializedComponent {
 }
 function isInitedComponent(obj: any): obj is IInitializedComponent {
   return !!obj.init;
+}
+
+export interface INeedsCleanup {
+  destroy: () => void;
+}
+function isNeedsCleanup(obj: any): obj is INeedsCleanup {
+  return !!obj.destroy;
 }
 
 export interface ISceneProp {

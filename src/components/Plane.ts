@@ -43,10 +43,10 @@ export class CPlane implements IUpdateableComponent, ISceneProp, BaseComponent {
     material.map = texture;
   }
 
-  update(_: number, entity: Entity) {
-    this.mesh.position.copy(entity.transform.position);
-    this.mesh.quaternion.copy(entity.transform.rotation);
-    this.mesh.scale.copy(entity.transform.scale);
+  update(_: number) {
+    this.mesh.position.copy(this.entity.transform.position);
+    this.mesh.quaternion.copy(this.entity.transform.rotation);
+    this.mesh.scale.copy(this.entity.transform.scale);
   }
 
   addToScene(scene: Scene) {
