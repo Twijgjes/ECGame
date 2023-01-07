@@ -1,6 +1,6 @@
 import { Raycaster, Vector2 } from "three";
 import { Entity } from "../entity";
-import { Game, initialize, start } from "../game";
+import { Game } from "../game";
 
 import restartButtonImg from "../assets/images/restartbutton.png";
 
@@ -24,15 +24,9 @@ export function createRestartButton(game: Game) {
     const intersects = raycaster.intersectObjects(game.engine.scene.children);
     intersects.find((intersect) => {
       if (intersect.object === restartButton.sprite.sprite) {
-        restart(game);
+        game.restart();
       }
     });
   });
   return restartButton;
-}
-
-function restart(game: Game) {
-  document.body.removeChild(game.engine.canvasElement);
-  game = initialize();
-  start(game);
 }

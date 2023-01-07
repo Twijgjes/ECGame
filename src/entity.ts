@@ -1,6 +1,5 @@
-import { Scene, Vector3 } from "three";
+import { Scene } from "three";
 import { Body } from "./components/Body";
-import { ClickBoost } from "./behaviors/ClickBoost";
 import {
   Boundary2DCollider,
   CircleCollider,
@@ -196,8 +195,11 @@ function isInitedComponent(obj: any): obj is IInitializedComponent {
   return !!obj.init;
 }
 
-export interface INeedsCleanup {
-  destroy: () => void;
+export abstract class INeedsCleanup {
+  constructor(public entity: Entity) {
+    entity.game.needsCleanup.push(this);
+  }
+  abstract destroy(): void;
 }
 function isNeedsCleanup(obj: any): obj is INeedsCleanup {
   return !!obj.destroy;
