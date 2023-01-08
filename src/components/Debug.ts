@@ -45,13 +45,23 @@ export class DebugSphere
 {
   public entity: Entity;
   private sphere: Mesh;
-  constructor(public radius: number = 1) {
+  private _radius: number;
+  constructor(radius: number = 1) {
     const geometry = new SphereGeometry(this.radius, 7, 7);
     const material = new MeshBasicMaterial({
       color: 0xff0000,
       wireframe: true,
     });
     this.sphere = new Mesh(geometry, material);
+    this.radius = radius;
+  }
+
+  set radius(radius: number) {
+    this.sphere.geometry = new SphereGeometry(radius, 7, 7);
+  }
+
+  get radius(): number {
+    return this._radius;
   }
 
   update(_: number) {

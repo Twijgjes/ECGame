@@ -12,10 +12,13 @@ import {
   ISceneProp,
   Entity,
   BaseComponent,
+  INeedsCleanup,
 } from "../entity";
 import punchbirdImg from "../assets/images/punchbird.png";
 
-export class CPlane implements IUpdateableComponent, ISceneProp, BaseComponent {
+export class CPlane
+  implements INeedsCleanup, IUpdateableComponent, ISceneProp, BaseComponent
+{
   public entity: Entity;
   mesh: Mesh;
 
@@ -55,5 +58,9 @@ export class CPlane implements IUpdateableComponent, ISceneProp, BaseComponent {
 
   removeFromScene(scene: Scene) {
     scene.remove(this.mesh);
+  }
+
+  destroy(): void {
+    this.removeFromScene(this.entity.game.engine.scene);
   }
 }

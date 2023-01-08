@@ -5,7 +5,7 @@ import { Game } from "../game";
 import restartButtonImg from "../assets/images/restartbutton.png";
 
 export function createRestartButton(game: Game) {
-  const restartButton = new Entity(game);
+  const restartButton = new Entity(game, "restartButton");
   restartButton.sprite.setTexture(restartButtonImg);
 
   const raycaster = new Raycaster();

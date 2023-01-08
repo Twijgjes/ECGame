@@ -70,6 +70,21 @@ const ComponentMap = {
   spawner: Spawner,
 };
 
+const randomName = () =>
+  entityNames[Math.floor(Math.random() * entityNames.length)];
+const entityNames = [
+  "kaladin",
+  "shallan",
+  "dalinar",
+  "adolin",
+  "navani",
+  "chert",
+  "szeth",
+  "leshwi",
+  "venli",
+  "renarin",
+];
+
 export class Entity {
   transform: Transform;
   parentTransform: ParentTransform;
@@ -90,7 +105,11 @@ export class Entity {
   private proxy: Entity;
   private unwrapped: Entity;
 
-  constructor(public readonly game: Game, public debug: boolean = false) {
+  constructor(
+    public readonly game: Game,
+    public name: string = randomName(),
+    public debug: boolean = false
+  ) {
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
     this.proxy = new Proxy(this, {
       // https://www.typescriptlang.org/docs/handbook/2/keyof-types.html
@@ -163,6 +182,21 @@ export class Entity {
 
       if (isUpdateableComponent(updateable)) {
         updateable.update(deltaSeconds);
+      }
+    }
+  }
+
+  destroy() {
+    for (const [key, descructible] of Object.entries(this.proxy)) {
+      // Haha fuck this is dirty
+      // TODO: maybe refactor this so that all components get added to a separate array or obj?
+      // But then I have to keep track of removals and additions and I'm lazy lol
+      if (key === "game" || key === "proxy" || key === "unwrapped") {
+        continue;
+      }
+
+      if (isNeedsCleanup(descructible)) {
+        descructible.destroy();
       }
     }
   }

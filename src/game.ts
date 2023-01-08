@@ -43,6 +43,17 @@ export class Game {
     const punchbird = createPunchbird(this);
     const pipes = createPipes(this, moveSpeed);
     const fists = createFists(this, moveSpeed);
+
+    // TODO: Pick-up-able fist
+    // TODO: Fist counter on screen
+    // TODO: Fist spawner
+    // TODO: Fist-punch pipe
+
+    // TODO: Spawn pipes further away
+    // TODO: Make title move and rotate out of screen
+    // TODO: Fix pausing + spawner mechanics
+    // TODO: Sounds!
+    // TODO: Screen resizing
   }
 
   public start() {

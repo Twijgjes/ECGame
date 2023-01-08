@@ -7,7 +7,7 @@ import { Game } from "../game";
 import berdArmBentImg from "../assets/images/punchbird_arm_bent.png";
 
 export function createPunchbird(game: Game): Entity {
-  const punchbird = new Entity(game);
+  const punchbird = new Entity(game, "punchbird");
 
   punchbird.plane.setTexture(berdArmBentImg);
   punchbird.body.velocity = new Vector3(0, 0, 0);
@@ -18,17 +18,30 @@ export function createPunchbird(game: Game): Entity {
   punchbird.circleCollider.radius = radius;
   // punchbird.debugSphere = new DebugSphere(radius);
   punchbird.collisionBehavior.action = (collision, fromMyPerspective) => {
-    // Move entity out of collision range
-    const vel = fromMyPerspective.self.body.velocity;
-    const direction = vel.clone().negate().setLength(collision.overlap);
-    fromMyPerspective.self.transform.position.add(direction);
-    // Hacky way of reflection
-    vel.multiply(
-      Math.abs(vel.y) > Math.abs(vel.x)
-        ? new Vector3(0, -1, 0)
-        : new Vector3(-1, 0, 0)
+    console.info(
+      fromMyPerspective.self.name,
+      "collided with",
+      fromMyPerspective.other.name
     );
-    game.gameOver();
+    if (
+      fromMyPerspective.other.name === "pipe" ||
+      fromMyPerspective.other.name === "ground"
+    ) {
+      // Move entity out of collision range
+      const vel = fromMyPerspective.self.body.velocity;
+      const direction = vel.clone().negate().setLength(collision.overlap);
+      fromMyPerspective.self.transform.position.add(direction);
+      // Hacky way of reflection
+      vel.multiply(
+        Math.abs(vel.y) > Math.abs(vel.x)
+          ? new Vector3(0, -1, 0)
+          : new Vector3(-1, 0, 0)
+      );
+      game.gameOver();
+    } else if (fromMyPerspective.other.name === "fist") {
+      console.info("✊");
+      fromMyPerspective.other.destroy();
+    }
   };
   return punchbird;
 }

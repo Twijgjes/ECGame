@@ -1,4 +1,4 @@
-import { Vector3 } from "three";
+import { Euler, Vector3 } from "three";
 import { InfiniteScroll } from "../components/InfiniteScroll";
 import { Entity } from "../entity";
 import { Game } from "../game";
@@ -14,9 +14,10 @@ export function createBackground(game: Game, moveSpeed: number) {
     spawnPos: Vector3,
     textureUrl: string,
     moveSpeedMultiplier = 1,
-    hasBoundary = false
+    hasBoundary = false,
+    name?: string
   ) => {
-    const entity = new Entity(game);
+    const entity = new Entity(game, name);
     entity.sprite.setTexture(textureUrl);
     entity.transform.position.copy(spawnPos);
     if (hasBoundary) {
@@ -33,11 +34,19 @@ export function createBackground(game: Game, moveSpeed: number) {
   const gw = 5.95;
   let groundStart = -gw * 2;
   const gxp = () => (groundStart += gw);
+  const args = (): [number, Vector3, any, number, boolean, string] => [
+    gw,
+    new Vector3(gxp(), -3.1, 0),
+    groundImg,
+    1,
+    true,
+    "ground",
+  ];
   const groundEntities = [
-    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
-    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
-    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
-    parallaxEntity(gw, new Vector3(gxp(), -3.1, 0), groundImg, 1, true),
+    parallaxEntity(...args()),
+    parallaxEntity(...args()),
+    parallaxEntity(...args()),
+    parallaxEntity(...args()),
   ];
 
   const bushWidth = 5.95;
@@ -60,10 +69,13 @@ export function createBackground(game: Game, moveSpeed: number) {
     parallaxEntity(cloudWidth, new Vector3(cxp(), -0.7, -0.2), cloudsImg, 0.2),
   ];
 
-  const title = new Entity(game);
+  const title = new Entity(game, "title");
   title.transform.position.set(0, 2.6, 0);
+  title.transform.scale.set(2.5, 1, 1);
+  title.body.rotationVelocity.setFromEuler(new Euler(0, 0, 0.0005));
+  title.body.velocity.set(-0.4, 0, 0);
   // title.sprite.sprite.rotation.set(90, 90, 90);
   // title.body.rotationVelocity.setFromEuler(new Euler(1, 1, 0.1));
-  title.sprite.setTexture(titleImg);
+  title.plane.setTexture(titleImg);
   return { groundEntities, bushEntities, cloudEntities, title };
 }

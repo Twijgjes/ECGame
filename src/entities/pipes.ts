@@ -16,7 +16,7 @@ export function createPipes(game: Game, moveSpeed: number) {
     const bottomPipe = simplePipeFactory();
 
     // Make pipe parent
-    const parent = new Entity(game);
+    const parent = new Entity(game, "pipeParent");
     parent.body.velocity.setX(moveSpeed);
     parent.parentTransform = new ParentTransform([
       {
@@ -38,7 +38,7 @@ export function createPipes(game: Game, moveSpeed: number) {
   };
 
   const simplePipeFactory = (debug = false) => {
-    const pipe = new Entity(game);
+    const pipe = new Entity(game, "pipe");
     pipe.plane.setTexture(longpipeImg);
     pipe.transform.scale.y = 5.9;
     if (debug) {
@@ -48,7 +48,7 @@ export function createPipes(game: Game, moveSpeed: number) {
     return pipe;
   };
 
-  const pipeSpawner = new Entity(game);
+  const pipeSpawner = new Entity(game, "pipeSpawner");
   pipeSpawner.transform.position = new Vector3(4, 1, 0);
   pipeSpawner.spawner = new Spawner(
     10,
